@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace PixSmith.Web.JamTools;
 
@@ -13,6 +14,8 @@ public class Program
 
         builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
-        await builder.Build().RunAsync();
+		builder.Services.AddFluentUIComponents();
+
+		await builder.Build().RunAsync();
     }
 }

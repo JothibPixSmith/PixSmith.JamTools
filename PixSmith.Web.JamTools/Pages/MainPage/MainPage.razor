@@ -1,0 +1,333 @@
+﻿@page "/"
+
+<PageTitle>Guitar Fretboard</PageTitle>
+
+<div class="fretboard-app">
+
+    <!-- ── Controls ───────────────────────────────────────────────── -->
+    <div class="panel controls-panel">
+        <div class="control-row">
+
+            <div class="control-group">
+                <label class="ctrl-label">Root Note</label>
+                <FluentSelect TOption="string" @bind-Value="_rootNote">
+                    @foreach (var n in AllNotes)
+                    {
+                        <FluentOption Value="@n">@n</FluentOption>
+                    }
+                </FluentSelect>
+            </div>
+
+            <div class="control-group">
+                <label class="ctrl-label">Scale / Mode</label>
+                <FluentSelect TOption="string" @bind-Value="_selectedScale">
+                    @foreach (var s in Scales.Keys)
+                    {
+                        <FluentOption Value="@s">@s</FluentOption>
+                    }
+                </FluentSelect>
+            </div>
+
+            <div class="control-group">
+                <label class="ctrl-label">Tuning</label>
+                <FluentSelect TOption="string" @bind-Value="_selectedTuning">
+                    @foreach (var t in Tunings.Keys)
+                    {
+                        <FluentOption Value="@t">@t</FluentOption>
+                    }
+                </FluentSelect>
+            </div>
+
+            <div class="control-group control-group--sm">
+                <label class="ctrl-label">Frets</label>
+                <FluentNumberField TValue="int"
+                                   @bind-Value="_numFrets"
+                                   Min="@_minFrets.ToString()"
+                                   Max="@_maxFrets.ToString()" />
+            </div>
+
+            <div class="control-group">
+                <label class="ctrl-label">Display</label>
+                <div class="check-row">
+                    <FluentCheckbox @bind-Value="_showNoteNames" Label="Notes" />
+                    <FluentCheckbox @bind-Value="_showDegrees" Label="Degrees" />
+                </div>
+            </div>
+
+            <div class="control-group control-group--btn">
+                <label class="ctrl-label">&nbsp;</label>
+                <FluentButton @onclick="ClearSelection" Appearance="Appearance.Outline">
+                    ↺ Reset
+                </FluentButton>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── Scale Info ─────────────────────────────────────────────── -->
+    @if (Scales.ContainsKey(_selectedScale))
+    {
+        <div class="panel scale-info-panel">
+            <span class="scale-title">@_rootNote @_selectedScale</span>
+            <span class="scale-sep">|</span>
+            <div class="badge-row">
+                @foreach (var note in GetScaleNotes())
+                {
+                    <span class="note-badge @(note == _rootNote ? "note-badge--root" : "")">@note</span>
+                }
+            </div>
+            <span class="scale-sep hide-sm">|</span>
+            <span class="intervals hide-sm">@string.Join(" · ", GetIntervalNames())</span>
+        </div>
+    }
+
+    <!-- ── Fretboard ──────────────────────────────────────────────── -->
+    <div class="panel fretboard-panel">
+        <div class="fretboard-scroll">
+            <div class="fretboard">
+
+                @{
+                    var tuningNotes = Tunings[_selectedTuning];
+                }
+
+                <!-- Fret number header -->
+                <div class="fb-row fb-row--header">
+                    <div class="fb-string-label"></div>
+                    @for (int f = 0; f <= _numFrets; f++)
+                    {
+                        int fn = f;
+                        <div class="fb-cell fb-cell--header @(IsMarkerFret(fn) ? "fb-cell--marker" : "")">
+                            @fn
+                        </div>
+                    }
+                </div>
+
+                <!-- Top position dots -->
+                <div class="fb-row fb-row--dots">
+                    <div class="fb-string-label"></div>
+                    @for (int f = 0; f <= _numFrets; f++)
+                    {
+                        int fn = f;
+                        <div class="fb-cell fb-cell--dot">
+                            @if (IsDoubleDot(fn))
+                            {
+                                <div class="pos-dot"></div>
+                                <div class="pos-dot"></div>
+                            }
+                            else if (IsMarkerFret(fn))
+                            {
+                                <div class="pos-dot"></div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- String rows -->
+                @for (int s = 0; s < tuningNotes.Length; s++)
+                {
+                    int si = s;
+                    string openNote = tuningNotes[si];
+                    <div class="fb-row fb-row--string" style="--str-w:@(StringWidthPx(si))px">
+                        <div class="fb-string-label">
+                            <span>@openNote</span>
+                        </div>
+                        @for (int f = 0; f <= _numFrets; f++)
+                        {
+                            int fi = f;
+                            string noteHere = NoteAtFret(openNote, fi);
+                            bool inScale = IsInScale(noteHere);
+                            bool isRoot = noteHere == _rootNote;
+                            bool isSel = _customNotes.Contains((si, fi));
+                            bool isNut = fi == 0;
+
+                            <div class="fb-cell fb-cell--fret @(isNut ? "fb-cell--nut" : "")"
+                                 @onclick="() => ToggleNote(si, fi)">
+                                <div class="string-line"></div>
+                                @if (!isNut)
+                                {
+                                    <div class="fret-bar"></div>
+                                }
+                                @if (inScale || isSel)
+                                {
+                                    string dc = isRoot ? "ndot ndot--root"
+                                    : isSel ? "ndot ndot--custom"
+                                    : "ndot ndot--scale";
+                                    <div class="@dc" title="@noteHere">
+                                        @if (_showNoteNames)
+                                        {
+                                            <span>@noteHere</span>
+                                        }
+                                        else if (_showDegrees)
+                                        {
+
+                                            <span>@Degree(noteHere)</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- Bottom position dots -->
+                <div class="fb-row fb-row--dots">
+                    <div class="fb-string-label"></div>
+                    @for (int f = 0; f <= _numFrets; f++)
+                    {
+                        int fn = f;
+                        <div class="fb-cell fb-cell--dot">
+                            @if (IsDoubleDot(fn))
+                            {
+                                <div class="pos-dot"></div>
+                                <div class="pos-dot"></div>
+                            }
+                        </div>
+                    }
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Legend ─────────────────────────────────────────────────── -->
+    <div class="panel legend-panel">
+        <span class="legend-title">Legend:</span>
+        <div class="legend-item"><div class="ndot ndot--root ndot--sm"></div><span>Root</span></div>
+        <div class="legend-item"><div class="ndot ndot--scale ndot--sm"></div><span>Scale note</span></div>
+        <div class="legend-item"><div class="ndot ndot--custom ndot--sm"></div><span>Custom (click)</span></div>
+    </div>
+
+</div>
+
+@code {
+    // ── fields ──────────────────────────────────────────────────────
+    private string _rootNote = "A";
+    private string _selectedScale = "Natural Minor";
+    private string _selectedTuning = "Standard (EADGBE)";
+    private int _numFrets = 15;
+    private int _minFrets = 12;
+    private int _maxFrets = 24;
+    private bool _showNoteNames = true;
+    private bool _showDegrees = false;
+
+    private readonly HashSet<(int S, int F)> _customNotes = new();
+
+    // ── static data ─────────────────────────────────────────────────
+    private static readonly string[] AllNotes =
+        { "C","C#","D","D#","E","F","F#","G","G#","A","A#","B" };
+
+    private static readonly string[] Chromatic =
+        { "C","C#","D","D#","E","F","F#","G","G#","A","A#","B" };
+
+    private static readonly Dictionary<string, string> Enharmonic = new()
+    {
+        {"Eb","D#"},{"Ab","G#"},{"Bb","A#"},{"Db","C#"},{"Gb","F#"}
+    };
+
+    private static readonly Dictionary<string, int[]> Scales = new()
+    {
+        { "Major (Ionian)",   new[]{ 0,2,4,5,7,9,11 } },
+        { "Natural Minor",    new[]{ 0,2,3,5,7,8,10 } },
+        { "Harmonic Minor",   new[]{ 0,2,3,5,7,8,11 } },
+        { "Melodic Minor",    new[]{ 0,2,3,5,7,9,11 } },
+        { "Pentatonic Major", new[]{ 0,2,4,7,9 } },
+        { "Pentatonic Minor", new[]{ 0,3,5,7,10 } },
+        { "Blues",            new[]{ 0,3,5,6,7,10 } },
+        { "Dorian",           new[]{ 0,2,3,5,7,9,10 } },
+        { "Phrygian",         new[]{ 0,1,3,5,7,8,10 } },
+        { "Lydian",           new[]{ 0,2,4,6,7,9,11 } },
+        { "Mixolydian",       new[]{ 0,2,4,5,7,9,10 } },
+        { "Locrian",          new[]{ 0,1,3,5,6,8,10 } },
+        { "Whole Tone",       new[]{ 0,2,4,6,8,10 } },
+        { "Diminished (HW)",  new[]{ 0,1,3,4,6,7,9,10 } },
+        { "Chromatic",        new[]{ 0,1,2,3,4,5,6,7,8,9,10,11 } },
+    };
+
+    private static readonly Dictionary<string, string[]> Tunings = new()
+    {
+        { "Standard (EADGBE)",   new[]{"E","A","D","G","B","E"} },
+        { "Drop D (DADGBE)",     new[]{"D","A","D","G","B","E"} },
+        { "Open G (DGDGBD)",     new[]{"D","G","D","G","B","D"} },
+        { "Open D (DADFAD)",     new[]{"D","A","D","F#","A","D"} },
+        { "Half Step Down (Eb)", new[]{"D#","G#","C#","F#","A#","D#"} },
+        { "Full Step Down (D)",  new[]{"D","G","C","F","A","D"} },
+        { "DADGAD",              new[]{"D","A","D","G","A","D"} },
+    };
+
+    private static readonly string[] DegreeNames = { "1", "b2", "2", "b3", "3", "4", "b5", "5", "b6", "6", "b7", "7" };
+    private static readonly Dictionary<int, string> IvlNames = new()
+        {{0,"R"},{1,"b2"},{2,"2"},{3,"b3"},{4,"3"},{5,"4"},
+         {6,"b5"},{7,"5"},{8,"b6"},{9,"6"},{10,"b7"},{11,"7"}};
+
+    private static readonly HashSet<int> MarkerFrets = new() { 3, 5, 7, 9, 12, 15, 17, 19, 21, 24 };
+    private static readonly HashSet<int> DoubleFrets = new() { 12, 24 };
+
+    // ── helpers ─────────────────────────────────────────────────────
+    private int IndexOf(string note)
+    {
+        int i = Array.IndexOf(Chromatic, note);
+        if (i < 0 && Enharmonic.TryGetValue(note, out var eq))
+            i = Array.IndexOf(Chromatic, eq);
+        return i;
+    }
+
+    private string NoteAtFret(string openNote, int fret)
+    {
+        int i = IndexOf(openNote);
+        return i < 0 ? "?" : Chromatic[(i + fret) % 12];
+    }
+
+    private bool IsInScale(string note)
+    {
+        if (!Scales.TryGetValue(_selectedScale, out var ivl)) return false;
+        int ri = IndexOf(_rootNote), ni = IndexOf(note);
+        if (ri < 0 || ni < 0) return false;
+        return ivl.Contains((ni - ri + 12) % 12);
+    }
+
+    private List<string> GetScaleNotes()
+    {
+        if (!Scales.TryGetValue(_selectedScale, out var ivl)) return new List<string>();
+        int ri = IndexOf(_rootNote);
+        if (ri < 0) return new List<string>();
+        return ivl.Select(i => Chromatic[(ri + i) % 12]).ToList();
+    }
+
+    private List<string> GetIntervalNames()
+    {
+        if (!Scales.TryGetValue(_selectedScale, out var ivl)) return new List<string>();
+        return ivl.Select(i => IvlNames.TryGetValue(i, out var n) ? n : i.ToString()).ToList();
+    }
+
+    private string Degree(string note)
+    {
+        int ri = IndexOf(_rootNote), ni = IndexOf(note);
+        return (ri < 0 || ni < 0) ? "?" : DegreeNames[(ni - ri + 12) % 12];
+    }
+
+    private bool IsMarkerFret(int f) => MarkerFrets.Contains(f);
+    private bool IsDoubleDot(int f) => DoubleFrets.Contains(f);
+
+    private int StringWidthPx(int stringIndex)
+    {
+        // string 0 = thinnest (high E), string 5 = thickest (low E)
+        return stringIndex switch
+        {
+            0 => 1,
+            1 => 1,
+            2 => 2,
+            3 => 2,
+            4 => 3,
+            5 => 4,
+            _ => 2
+        };
+    }
+
+    private void ToggleNote(int s, int f)
+    {
+        var k = (s, f);
+        if (!_customNotes.Remove(k)) _customNotes.Add(k);
+    }
+
+    private void ClearSelection() => _customNotes.Clear();
+}

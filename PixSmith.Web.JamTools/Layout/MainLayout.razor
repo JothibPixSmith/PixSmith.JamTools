@@ -1,10 +1,38 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
 
-    <main>
+<FluentDesignTheme @bind-Mode="_themeMode" StorageName="guitarapp-theme" />
 
-        <article class="content px-4">
-            @Body
-        </article>
+<div class="app-shell">
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="header-brand">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="color:#d4af37;flex-shrink:0;">
+                    <path d="M12 3a9 9 0 1 0 9 9A9 9 0 0 0 12 3zm0 16a7 7 0 1 1 7-7 7 7 0 0 1-7 7zm.5-11.5v5.17l3.67 3.67-1.41 1.41L11 14.08V7.5z" />
+                    <path d="M9 7h2v5H9zm4 0h2v3h-2z" opacity=".5" />
+                </svg>
+                <span class="brand-text">Guitar Fretboard</span>
+            </div>
+            <div class="header-actions">
+                <span class="theme-label">Dark mode</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" @bind="_isDark" @bind:after="ApplyTheme" />
+                    <span class="toggle-track"></span>
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-main">
+        @Body
     </main>
 </div>
+
+@code {
+    private DesignThemeModes _themeMode = DesignThemeModes.Dark;
+    private bool _isDark = true;
+
+    private void ApplyTheme()
+    {
+        _themeMode = _isDark ? DesignThemeModes.Dark : DesignThemeModes.Light;
+    }
+}

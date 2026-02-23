@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - gh-page
     tags:
       - '*'
 
@@ -30,7 +29,3 @@ jobs:
         
       - name: Build Project
         run: dotnet build
-
-      - name: Publish Project
-        if: github.ref_name == 'gh-page'
-        run: dotnet publish -c Release

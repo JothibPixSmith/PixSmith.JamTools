@@ -33,4 +33,4 @@ jobs:
 
       - name: Publish Project
         if: github.ref_name == 'gh-page'
-        run: dotnet publish -c Release -o ./docs
+        run: dotnet publish -c Release

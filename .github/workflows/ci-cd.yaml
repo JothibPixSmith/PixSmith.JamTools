@@ -1,31 +1,31 @@
-name: CI/CD Pipeline
+# name: CI/CD Pipeline
 
-# Trigger the workflow on push to the main branch and on tag creation
-on:
-  push:
-    branches:
-      - main
-    tags:
-      - '*'
+# # Trigger the workflow on push to the main branch and on tag creation
+# on:
+#   push:
+#     branches:
+#       - main
+#     tags:
+#       - '*'
 
-# Define environment variables
-env:
-  NODE_VERSION: '20.8.1'
-  DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/github-action-test
+# # Define environment variables
+# env:
+#   NODE_VERSION: '20.8.1'
+#   DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/github-action-test
 
-jobs:
-  build:
-    name: Build .Net Boilerplate
-    runs-on: ubuntu-latest
+# jobs:
+#   build:
+#     name: Build .Net Boilerplate
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v3
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '10'
+#       - name: Setup .NET
+#         uses: actions/setup-dotnet@v5
+#         with:
+#           dotnet-version: '10'
         
-      - name: Build Project
-        run: dotnet build
+#       - name: Build Project
+#         run: dotnet build

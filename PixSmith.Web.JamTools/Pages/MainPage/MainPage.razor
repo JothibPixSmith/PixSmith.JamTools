@@ -13,7 +13,7 @@
                 <FluentSelect TOption="string" @bind-Value="_rootNote">
                     @foreach (var n in AllNotes)
                     {
-                        <FluentOption Value="@n">@n</FluentOption>
+                        <FluentOption Value="@n">@(_noteDisplayMode == NoteDisplayMode.Solfege ? @Do(n) : n)</FluentOption>
                     }
                 </FluentSelect>
             </div>
@@ -49,8 +49,12 @@
             <div class="control-group">
                 <label class="ctrl-label">Display</label>
                 <div class="check-row">
-                    <FluentCheckbox @bind-Value="_showNoteNames" Label="Notes" />
-                    <FluentCheckbox @bind-Value="_showDegrees" Label="Degrees" />
+                    <FluentRadioGroup Name="noteDisplayMode" @bind-Value=_noteDisplayMode Label="Note Display Mode:">
+                        <FluentRadio Value="@NoteDisplayMode.Note">Notes</FluentRadio>
+                        <FluentRadio Value="@NoteDisplayMode.Solfege">Solfège</FluentRadio>
+                        <FluentRadio Value="@NoteDisplayMode.Degree">Degrees</FluentRadio>
+                    </FluentRadioGroup>
+                    
                 </div>
             </div>
 
@@ -129,7 +133,7 @@
                     string openNote = tuningNotes[si];
                     <div class="fb-row fb-row--string" style="--str-w:@(StringWidthPx(si))px">
                         <div class="fb-string-label">
-                            <span>@openNote</span>
+                            <span>@(_noteDisplayMode == NoteDisplayMode.Solfege ? @Do(openNote) : openNote)</span>
                         </div>
                         @for (int f = 0; f <= _numFrets; f++)
                         {
@@ -153,14 +157,18 @@
                                     : isSel ? "ndot ndot--custom"
                                     : "ndot ndot--scale";
                                     <div class="@dc" title="@noteHere">
-                                        @if (_showNoteNames)
+                                        @if (_noteDisplayMode == NoteDisplayMode.Note)
                                         {
                                             <span>@noteHere</span>
                                         }
-                                        else if (_showDegrees)
+                                        else if (_noteDisplayMode == NoteDisplayMode.Degree)
                                         {
 
                                             <span>@Degree(noteHere)</span>
+                                        }
+                                        else if (_noteDisplayMode == NoteDisplayMode.Solfege)
+                                        {
+                                            <span>@Do(noteHere)</span>
                                         }
                                     </div>
                                 }
@@ -204,17 +212,27 @@
     private string _rootNote = "A";
     private string _selectedScale = "Natural Minor";
     private string _selectedTuning = "Standard (EADGBE)";
-    private int _numFrets = 15;
+    private int _numFrets = 12;
     private int _minFrets = 12;
     private int _maxFrets = 24;
-    private bool _showNoteNames = true;
-    private bool _showDegrees = false;
+    private NoteDisplayMode _noteDisplayMode = NoteDisplayMode.Note;
 
     private readonly HashSet<(int S, int F)> _customNotes = new();
 
     // ── static data ─────────────────────────────────────────────────
+
+    private enum NoteDisplayMode
+    {
+        Note,
+        Solfege,
+        Degree
+    }
+
     private static readonly string[] AllNotes =
         { "C","C#","D","D#","E","F","F#","G","G#","A","A#","B" };
+
+    private static readonly string[] AllDo =
+        { "Do","Do#","Re","Re#","Mi","Fa","Fa#","Sol","Sol#","La","A#","Si" };
 
     private static readonly string[] Chromatic =
         { "C","C#","D","D#","E","F","F#","G","G#","A","A#","B" };
@@ -300,6 +318,18 @@
     }
 
     private string Degree(string note)
+    {
+        int ri = IndexOf(_rootNote), ni = IndexOf(note);
+        return (ri < 0 || ni < 0) ? "?" : DegreeNames[(ni - ri + 12) % 12];
+    }
+
+    private string Do(string note)
+    {
+        var indexOfNote = IndexOf(note);
+        return AllDo[indexOfNote];
+    }
+
+    private string SolFege(string note)
     {
         int ri = IndexOf(_rootNote), ni = IndexOf(note);
         return (ri < 0 || ni < 0) ? "?" : DegreeNames[(ni - ri + 12) % 12];

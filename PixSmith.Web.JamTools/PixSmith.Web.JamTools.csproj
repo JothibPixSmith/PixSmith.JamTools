@@ -7,8 +7,6 @@
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
     <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
 	<PreserveNewest>true</PreserveNewest>
-	<PublishRepositoryUrl>true</PublishRepositoryUrl>
-	<PublishUrl>docs</PublishUrl>
   </PropertyGroup>
 
   <ItemGroup>

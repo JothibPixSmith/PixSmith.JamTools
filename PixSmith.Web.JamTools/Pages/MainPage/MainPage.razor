@@ -123,7 +123,7 @@
                 </div>
 
                 <!-- String rows -->
-                @for (int s = 0; s < tuningNotes.Length; s++)
+                @for (int s = tuningNotes.Length - 1; s > -1; s--)
                 {
                     int si = s;
                     string openNote = tuningNotes[si];

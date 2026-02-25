@@ -48,7 +48,7 @@ jobs:
       - name: Checkout specific branch
         uses: actions/checkout@v4
         with:
-          ref: gh-page
+          ref: gh-pages
 
       # ── 4. Inject build version into service worker ──────────────────────────
       - name: Inject build version into service-worker.js
@@ -61,6 +61,6 @@ jobs:
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: gh-page
+          branch: gh-pages
           force_with_lease: true
       

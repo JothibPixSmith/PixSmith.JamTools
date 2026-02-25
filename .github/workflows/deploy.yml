@@ -56,7 +56,7 @@ jobs:
       # ── 4. Inject build version into service worker ──────────────────────────
       - name: Inject build version into service-worker.js
         run: |
-          SW_PATH="publish/wwwroot/service-worker.js"
+          SW_PATH="service-worker.js"
           sed -i "s/__BUILD_VERSION__/${{ env.BUILD_VERSION }}/g" "$SW_PATH"
           echo "Service worker cache version: ${{ env.BUILD_VERSION }}"
 

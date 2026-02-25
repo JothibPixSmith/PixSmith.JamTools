@@ -1,21 +1,86 @@
-name: Deploy to GitHub Pages
+name: Deploy Blazor WASM to GitHub Pages
+
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
+  workflow_dispatch:
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET SDK
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Setup .NET ─────────────────────────────────────────────────────────
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: '10.x'
+
+      # ── 3. Publish ───────────────────────────────────────────────────────────
       - name: Publish
-        run: dotnet publish -c Release -o publish -p:GHPages=true
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v4
+        run: |
+          BUILD_VERSION=$(date -u +"%Y%m%d%H%M%S")
+          echo "BUILD_VERSION=$BUILD_VERSION" >> $GITHUB_ENV
+
+          dotnet publish BlazorGhPages/BlazorGhPages.csproj \
+            -c Release \
+            -o publish \
+            --nologo
+
+      # ── 4. Inject build version into service worker ──────────────────────────
+      - name: Inject build version into service-worker.js
+        run: |
+          SW_PATH="publish/wwwroot/service-worker.js"
+          sed -i "s/__BUILD_VERSION__/${{ env.BUILD_VERSION }}/g" "$SW_PATH"
+          echo "Service worker cache version: ${{ env.BUILD_VERSION }}"
+
+      # ── 5. GitHub Pages SPA fix: copy index.html → 404.html ──────────────────
+      #    GitHub Pages serves 404.html for unknown paths.
+      #    This lets Blazor's client-side router handle deep links.
+      - name: Fix SPA routing (copy index.html to 404.html)
+        run: cp publish/wwwroot/index.html publish/wwwroot/404.html
+
+      # ── 6. Fix base href for project-site repos ───────────────────────────────
+      #    If your repo is username.github.io/REPO_NAME, uncomment and set REPO_NAME.
+      #    Leave commented if your repo IS username.github.io (root site).
+      - name: Fix base href
+        env:
+          REPO_NAME: PixSmith.JamTools
+        run: |
+          sed -i "s|<base href=\"/\" />|<base href=\"/$REPO_NAME/\" />|g" publish/wwwroot/index.html
+          sed -i "s|<base href=\"/\" />|<base href=\"/$REPO_NAME/\" />|g" publish/wwwroot/404.html
+
+      # ── 7. Add .nojekyll so GitHub Pages serves _framework folder ─────────────
+      - name: Add .nojekyll
+        run: touch publish/wwwroot/.nojekyll
+
+      # ── 8. Upload artifact ───────────────────────────────────────────────────
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: publish/wwwroot
-          force_orphan: true
+          path: publish/wwwroot
+
+      # ── 9. Deploy ────────────────────────────────────────────────────────────
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

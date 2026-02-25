@@ -43,6 +43,12 @@ jobs:
             -c Release \
             -o publish \
             --nologo
+            publish -p:GHPages=true
+      
+      - name: Checkout specific branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-page
 
       # ── 4. Inject build version into service worker ──────────────────────────
       - name: Inject build version into service-worker.js
@@ -51,36 +57,10 @@ jobs:
           sed -i "s/__BUILD_VERSION__/${{ env.BUILD_VERSION }}/g" "$SW_PATH"
           echo "Service worker cache version: ${{ env.BUILD_VERSION }}"
 
-      # ── 5. GitHub Pages SPA fix: copy index.html → 404.html ──────────────────
-      #    GitHub Pages serves 404.html for unknown paths.
-      #    This lets Blazor's client-side router handle deep links.
-      - name: Fix SPA routing (copy index.html to 404.html)
-        run: cp publish/wwwroot/index.html publish/wwwroot/404.html
-
-      # ── 6. Fix base href for project-site repos ───────────────────────────────
-      #    If your repo is username.github.io/REPO_NAME, uncomment and set REPO_NAME.
-      #    Leave commented if your repo IS username.github.io (root site).
-      - name: Fix base href
-        env:
-          REPO_NAME: PixSmith.JamTools
-        run: |
-          sed -i "s|<base href=\"/\" />|<base href=\"/$REPO_NAME/\" />|g" publish/wwwroot/index.html
-          sed -i "s|<base href=\"/\" />|<base href=\"/$REPO_NAME/\" />|g" publish/wwwroot/404.html
-
-      # ── 7. Add .nojekyll so GitHub Pages serves _framework folder ─────────────
-      - name: Add .nojekyll
-        run: touch publish/wwwroot/.nojekyll
-
-      # ── 8. Upload artifact ───────────────────────────────────────────────────
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Commit and push
+        uses: ad-m/github-push-action@master
         with:
-          path: publish/wwwroot
-
-      # ── 9. Deploy ────────────────────────────────────────────────────────────
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-page
+          force_with_lease: true
+      

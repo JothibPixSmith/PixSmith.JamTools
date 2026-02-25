@@ -42,7 +42,7 @@ jobs:
           dotnet publish PixSmith.Web.JamTools/PixSmith.Web.JamTools.csproj \
             -c Release \
             -o publish \
-            --nologo
+            --nologo \
             -p:GHPages=true
       
       - name: Checkout specific branch

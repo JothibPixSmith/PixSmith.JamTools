@@ -39,7 +39,7 @@ jobs:
           BUILD_VERSION=$(date -u +"%Y%m%d%H%M%S")
           echo "BUILD_VERSION=$BUILD_VERSION" >> $GITHUB_ENV
 
-          dotnet publish BlazorGhPages/BlazorGhPages.csproj \
+          dotnet publish PixSmith.Web.JamTools/PixSmith.Web.JamTools.csproj \
             -c Release \
             -o publish \
             --nologo

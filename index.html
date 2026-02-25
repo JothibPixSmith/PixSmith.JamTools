@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jam Tools</title>
+    <base href="/PixSmith.JamTools/" />
+    <link href="_framework/dotnet.7btgkarr1x.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-nZssDT3d4DuPYpXT9MJfBlglUJoz+S0F2r5JYjkz7eM=" />
+    <link rel="stylesheet" href="_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link href="manifest.webmanifest" rel="manifest" />
+    <!-- Start Single Page Apps for GitHub Pages -->
+    <script type="text/javascript">
+        // Single Page Apps for GitHub Pages
+        // https://github.com/rafrex/spa-github-pages
+        // Copyright (c) 2016 Rafael Pedicini, licensed under the MIT License
+        // ----------------------------------------------------------------------
+        // This script checks to see if a redirect is present in the query string
+        // and converts it back into the correct url and adds it to the
+        // browser's history using window.history.replaceState(...),
+        // which won't cause the browser to attempt to load the new url.
+        // When the single page app is loaded further down in this file,
+        // the correct url will be waiting in the browser's history for
+        // the single page app to route accordingly.
+        (function (l) {
+            if (l.search) {
+                var q = {};
+                l.search.slice(1).split('&').forEach(function (v) {
+                    var a = v.split('=');
+                    q[a[0]] = a.slice(1).join('=').replace(/~and~/g, '&');
+                });
+                if (q.p !== undefined) {
+                    window.history.replaceState(null, null,
+                        l.pathname.slice(0, -1) + (q.p || '') +
+                        (q.q ? ('?' + q.q) : '') +
+                        l.hash
+                    );
+                }
+            }
+        }(window.location))
+    </script>
+    <script type="importmap">{
+  "imports": {
+    "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.66stpp682q.js",
+    "./_framework/dotnet.js": "./_framework/dotnet.7btgkarr1x.js",
+    "./_framework/dotnet.native.js": "./_framework/dotnet.native.69poregybn.js",
+    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.q5rqv3xrhm.js"
+  },
+  "scopes": {},
+  "integrity": {
+    "./_framework/blazor.webassembly.66stpp682q.js": "sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=",
+    "./_framework/blazor.webassembly.js": "sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=",
+    "./_framework/dotnet.7btgkarr1x.js": "sha256-nZssDT3d4DuPYpXT9MJfBlglUJoz+S0F2r5JYjkz7eM=",
+    "./_framework/dotnet.js": "sha256-nZssDT3d4DuPYpXT9MJfBlglUJoz+S0F2r5JYjkz7eM=",
+    "./_framework/dotnet.native.69poregybn.js": "sha256-JvdIvkSF0x6euoPT2QnQSMg2Gyv2oJbFeBi1XmWLYFU=",
+    "./_framework/dotnet.native.js": "sha256-JvdIvkSF0x6euoPT2QnQSMg2Gyv2oJbFeBi1XmWLYFU=",
+    "./_framework/dotnet.runtime.js": "sha256-ArknccFM1sHNVcih0x1h52AG+abNCoQjl6BlVrv3ePw=",
+    "./_framework/dotnet.runtime.q5rqv3xrhm.js": "sha256-ArknccFM1sHNVcih0x1h52AG+abNCoQjl6BlVrv3ePw="
+  }
+}</script>
+</head>
+<body>
+    <div id="app">
+        <div class="splash">
+            <div class="splash-spinner"></div>
+            <p>Loading…</p>
+        </div>
+    </div>
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">✕</a>
+    </div>
+    <script src="_framework/blazor.webassembly.66stpp682q.js" autostart="false"></script>
+    <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });</script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            // Unregister old service workers on every page load so the new one activates immediately
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                const registerSW = () => {
+                    navigator.serviceWorker.register('service-worker.js')
+                        .then(reg => {
+                            // Listen for a new SW waiting to activate
+                            reg.addEventListener('updatefound', () => {
+                                const newWorker = reg.installing;
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        // New content available — tell the SW to skip waiting
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                    }
+                                });
+                            });
+                        });
+                };
+
+                if (registrations.length === 0) {
+                    registerSW();
+                } else {
+                    // Let existing SW serve the current page, then re-register fresh
+                    Promise.all(registrations.map(r => r.unregister())).then(registerSW);
+                }
+            });
+
+            // Reload the page when the new SW has taken control
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
+                }
+            });
+        }
+    </script>
+    <script src="brotliloader.min.js" type="module"></script>
+</body>
+</html>

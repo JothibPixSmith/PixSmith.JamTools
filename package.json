@@ -1,0 +1,21 @@
+{
+  "name": "pix-smith-jam-tools",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "jothib@outlook.com",
+  "type": "commonjs",
+  "main": "service-worker.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "run:tailwind": "npx @tailwindcss/cli -i ./src/input.css -o ./src/output.css --watch",
+    "build:tailwind": "npx @tailwindcss/cli -i ./src/input.css -o ./src/output.css"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.17",
+    "eslint": "^9.39.1",
+    "tailwindcss": "^4.1.17"
+  }
+}

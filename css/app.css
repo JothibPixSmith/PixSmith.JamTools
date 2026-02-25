@@ -1,0 +1,545 @@
+﻿/* ================================================================
+   Guitar Fretboard — App Styles
+   Uses Fluent design tokens where available, falls back to vars.
+   ================================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600;700&display=swap');
+
+/* ── Tokens & Variables ──────────────────────────────────────────── */
+:root {
+    --gold: #d4af37;
+    --gold-bright: #f0d060;
+    --dot-root: #e84545;
+    --dot-scale: #4dabf7;
+    --dot-custom: #69db7c;
+    --wood-dark: #150a04;
+    --wood-mid: #241008;
+    --fret-silver: rgba(195,210,220,0.88);
+    --cell-w: 58px;
+    --string-h: 46px;
+    --label-w: 42px;
+    --radius: 8px;
+}
+
+/* ── Reset / Base ────────────────────────────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--body-font, 'Segoe UI', system-ui, sans-serif);
+    background-color: var(--neutral-layer-1, #1b1b1b);
+    color: var(--neutral-foreground-rest, #e0e0e0);
+    min-height: 100vh;
+}
+
+/* ── App Shell ───────────────────────────────────────────────────── */
+.app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ── Header ──────────────────────────────────────────────────────── */
+.app-header {
+    background: var(--neutral-layer-4, #111);
+    border-bottom: 1px solid var(--neutral-stroke-layer-rest, rgba(255,255,255,0.08));
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 20px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand-text {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1.5rem;
+    letter-spacing: 3px;
+    color: var(--gold);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.theme-label {
+    font-size: 0.82rem;
+    color: var(--neutral-foreground-hint, rgba(255,255,255,0.5));
+}
+
+/* ── Toggle Switch (pure CSS) ────────────────────────────────────── */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+}
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+.toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--neutral-stroke-rest, rgba(255,255,255,0.2));
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+    .toggle-track::after {
+        content: '';
+        position: absolute;
+        left: 3px;
+        top: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform 0.2s;
+    }
+
+.toggle-switch input:checked + .toggle-track {
+    background: var(--accent-fill-rest, #0078d4);
+}
+
+    .toggle-switch input:checked + .toggle-track::after {
+        transform: translateX(18px);
+    }
+
+/* ── Main ────────────────────────────────────────────────────────── */
+.app-main {
+    flex: 1;
+    padding: 18px 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ── Fretboard App ───────────────────────────────────────────────── */
+.fretboard-app {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* ── Panel (card replacement) ────────────────────────────────────── */
+.panel {
+    background: var(--neutral-layer-2, #242424);
+    border: 1px solid var(--neutral-stroke-layer-rest, rgba(255,255,255,0.07));
+    border-radius: var(--radius);
+    padding: 14px 16px;
+}
+
+/* ── Controls ────────────────────────────────────────────────────── */
+.control-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.control-group--sm {
+    max-width: 100px;
+}
+
+.control-group--btn {
+    justify-content: flex-end;
+}
+
+.ctrl-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--neutral-foreground-hint, rgba(255,255,255,0.55));
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.check-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    height: 32px;
+}
+
+/* ── Scale Info ──────────────────────────────────────────────────── */
+.scale-info-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+}
+
+.scale-title {
+    font-weight: 700;
+    font-size: 1rem;
+    white-space: nowrap;
+}
+
+.scale-sep {
+    color: var(--neutral-foreground-hint, rgba(255,255,255,0.25));
+}
+
+.badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.note-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 28px;
+    padding: 0 7px;
+    border-radius: 5px;
+    background: var(--accent-fill-rest, #0078d4);
+    color: var(--foreground-on-accent-rest, #fff);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    transition: transform 0.12s;
+    cursor: default;
+}
+
+    .note-badge:hover {
+        transform: scale(1.1);
+    }
+
+.note-badge--root {
+    background: var(--dot-root);
+    box-shadow: 0 0 10px rgba(232,69,69,0.4);
+}
+
+.intervals {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--neutral-foreground-hint, rgba(255,255,255,0.45));
+}
+
+/* ── Fretboard Panel ─────────────────────────────────────────────── */
+.fretboard-panel {
+    padding: 0;
+    overflow: hidden;
+}
+
+.fretboard-scroll {
+    overflow-x: auto;
+    background: linear-gradient(160deg, var(--wood-dark) 0%, var(--wood-mid) 50%, var(--wood-dark) 100%);
+    border-radius: var(--radius);
+    padding: 12px 16px 16px;
+    box-shadow: inset 0 4px 24px rgba(0,0,0,0.8);
+}
+
+/* ── Fretboard Grid ──────────────────────────────────────────────── */
+.fretboard {
+    display: inline-flex;
+    flex-direction: column;
+    min-width: max-content;
+}
+
+.fb-row {
+    display: flex;
+    align-items: center;
+}
+
+.fb-string-label {
+    width: var(--label-w);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--gold);
+    user-select: none;
+}
+
+/* ── Header row (fret numbers) ───────────────────────────────────── */
+.fb-row--header {
+    margin-bottom: 2px;
+}
+
+.fb-cell--header {
+    width: var(--cell-w);
+    flex-shrink: 0;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.28);
+    user-select: none;
+}
+
+    .fb-cell--header.fb-cell--marker {
+        color: rgba(255,255,255,0.65);
+        font-weight: 700;
+    }
+
+/* ── Position dot rows ───────────────────────────────────────────── */
+.fb-row--dots {
+    height: 18px;
+}
+
+.fb-cell--dot {
+    width: var(--cell-w);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.pos-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.13);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+/* Double-dot frets get two dots side by side via gap on the parent */
+.pos-dot--double { /* parent .fb-cell--dot holds two of these */
+}
+
+/* ── String rows ─────────────────────────────────────────────────── */
+.fb-row--string {
+    height: var(--string-h);
+    position: relative;
+}
+
+/* ── Fret cells ──────────────────────────────────────────────────── */
+.fb-cell--fret {
+    width: var(--cell-w);
+    flex-shrink: 0;
+    height: var(--string-h);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+}
+
+    .fb-cell--fret:hover {
+        background: rgba(255,255,255,0.04);
+        border-radius: 4px;
+    }
+
+/* String wire */
+.string-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: var(--str-w, 2px);
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold-bright) 50%, var(--gold) 100%);
+    box-shadow: 0 0 5px rgba(212,175,55,0.3);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Fret wire */
+.fret-bar {
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    background: linear-gradient(180deg, rgba(195,210,220,0.2) 0%, rgba(195,210,220,0.9) 35%, rgba(225,235,245,1.0) 50%, rgba(195,210,220,0.9) 65%, rgba(195,210,220,0.2) 100% );
+    border-radius: 2px;
+    box-shadow: -1px 0 2px rgba(0,0,0,0.5), 1px 0 3px rgba(255,255,255,0.12);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Nut */
+.fb-cell--nut .fret-bar {
+    display: none;
+}
+
+.fb-cell--nut::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 7px;
+    background: linear-gradient(90deg, #b8a878, #f5efdf, #b8a878);
+    border-right: 1px solid rgba(0,0,0,0.4);
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* ── Note Dots ───────────────────────────────────────────────────── */
+.ndot {
+    position: relative;
+    z-index: 3;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+    .ndot:hover {
+        transform: scale(1.2);
+    }
+
+.ndot--root {
+    background: radial-gradient(circle at 35% 35%, #ff7070, var(--dot-root));
+    border: 2px solid rgba(255,130,130,0.45);
+    box-shadow: 0 0 12px rgba(232,69,69,0.5), 0 2px 8px rgba(0,0,0,0.6);
+}
+
+.ndot--scale {
+    background: radial-gradient(circle at 35% 35%, #74c0fc, var(--dot-scale));
+    border: 2px solid rgba(116,192,252,0.4);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.ndot--custom {
+    background: radial-gradient(circle at 35% 35%, #8ce99a, var(--dot-custom));
+    border: 2px solid rgba(105,219,124,0.5);
+    box-shadow: 0 0 12px rgba(105,219,124,0.45), 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.ndot--sm {
+    width: 18px;
+    height: 18px;
+    cursor: default;
+}
+
+    .ndot--sm:hover {
+        transform: none;
+    }
+
+/* ── Legend ──────────────────────────────────────────────────────── */
+.legend-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+}
+
+.legend-title {
+    font-weight: 700;
+    font-size: 0.88rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.85rem;
+}
+
+/* ── Splash loader ───────────────────────────────────────────────── */
+.splash {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: var(--gold);
+}
+
+.splash-spinner {
+    width: 44px;
+    height: 44px;
+    border: 4px solid rgba(212,175,55,0.2);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Blazor error UI ─────────────────────────────────────────────── */
+#blazor-error-ui {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px;
+    background: #c0392b;
+    color: #fff;
+    font-size: 0.9rem;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .reload {
+        color: #fff;
+        margin-left: 12px;
+    }
+
+    #blazor-error-ui .dismiss {
+        float: right;
+        cursor: pointer;
+    }
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    :root {
+        --cell-w: 46px;
+        --string-h: 40px;
+        --label-w: 34px;
+    }
+
+    .ndot {
+        width: 22px;
+        height: 22px;
+        font-size: 0.55rem;
+    }
+
+    .app-main {
+        padding: 10px;
+    }
+
+    .hide-sm {
+        display: none;
+    }
+}

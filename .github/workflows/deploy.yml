@@ -44,7 +44,10 @@ jobs:
             -o publish \
             --nologo \
             -p:GHPages=true
-      
+            
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
+
       - name: Checkout specific branch
         uses: actions/checkout@v4
         with:

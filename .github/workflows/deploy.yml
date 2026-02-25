@@ -43,7 +43,7 @@ jobs:
             -c Release \
             -o publish \
             --nologo
-            publish -p:GHPages=true
+            -p:GHPages=true
       
       - name: Checkout specific branch
         uses: actions/checkout@v4

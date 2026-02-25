@@ -44,10 +44,14 @@ jobs:
             -o publish \
             --nologo \
             -p:GHPages=true
-            
+
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
-
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: publish/wwwroot
+          force_orphan: true
+        
       - name: Checkout specific branch
         uses: actions/checkout@v4
         with:

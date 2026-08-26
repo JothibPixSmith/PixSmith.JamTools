@@ -1,0 +1,66 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "detail": "Builds the whole solution (client + server).",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/PixSmith.Web.JamTools.slnx",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build-server",
+      "detail": "Builds only the host (pulls in the client via ProjectReference).",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/PixSmith.Server.JamTools/PixSmith.Server.JamTools.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "watch-server",
+      "detail": "dotnet watch on the host — hot reloads Razor/C# changes in the SPA.",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/PixSmith.Server.JamTools/PixSmith.Server.JamTools.csproj",
+        "--launch-profile",
+        "http"
+      ],
+      "isBackground": true,
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "publish",
+      "detail": "Publishes the host with the SPA baked in, to ./publish.",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "publish",
+        "${workspaceFolder}/PixSmith.Server.JamTools/PixSmith.Server.JamTools.csproj",
+        "-c",
+        "Release",
+        "-o",
+        "${workspaceFolder}/publish"
+      ],
+      "problemMatcher": "$msCompile"
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>PixSmith.Server.JamTools</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PixSmith.Web.JamTools\PixSmith.Web.JamTools.csproj" />
+  </ItemGroup>
+
+  <!--
+    The client sets OverrideHtmlAssetPlaceholders, so its index.html ships with
+    #[.{fingerprint}] placeholders and an empty importmap that the SDK fills in.
+    That rewrite runs when the client is published on its own (the GitHub Pages
+    workflow), but when the SPA is published *through* this host the client's
+    index.html is copied straight from source and the placeholders survive — the
+    app then requests _framework/blazor.webassembly#[.{fingerprint}].js and 404s.
+
+    So run the same SDK task here, against this project's publish-time assets
+    (their fingerprints differ from the client's standalone publish), and drop the
+    rewritten file over the published copy.
+  -->
+  <UsingTask TaskName="Microsoft.AspNetCore.StaticWebAssets.Tasks.OverrideHtmlAssetPlaceholders"
+             AssemblyFile="$(StaticWebAssetsSdkBuildTasksAssembly)" />
+
+  <Target Name="ResolveSpaIndexHtmlPlaceholders" AfterTargets="Publish">
+    <PropertyGroup>
+      <_SpaIndexHtmlPath>$([MSBuild]::NormalizeDirectory($(IntermediateOutputPath), 'spaindexhtml'))</_SpaIndexHtmlPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_SpaIndexHtmlFile Include="@(ResolvedFileToPublish)"
+                         Condition="'%(ResolvedFileToPublish.RelativePath)' == 'wwwroot/index.html'" />
+    </ItemGroup>
+
+    <MakeDir Directories="$(_SpaIndexHtmlPath)" Condition="'@(_SpaIndexHtmlFile)' != ''" />
+
+    <OverrideHtmlAssetPlaceholders Condition="'@(_SpaIndexHtmlFile)' != ''"
+                                   Assets="@(StaticWebAsset)"
+                                   Endpoints="@(StaticWebAssetEndpoint)"
+                                   IncludeOnlyHardFingerprintedModules="true"
+                                   HtmlFiles="@(_SpaIndexHtmlFile)"
+                                   OutputPath="$(_SpaIndexHtmlPath)">
+      <Output TaskParameter="HtmlCandidates" ItemName="_SpaIndexHtmlCandidate" />
+      <Output TaskParameter="FileWrites" ItemName="FileWrites" />
+    </OverrideHtmlAssetPlaceholders>
+
+    <Copy Condition="'@(_SpaIndexHtmlCandidate)' != ''"
+          SourceFiles="@(_SpaIndexHtmlCandidate)"
+          DestinationFiles="$(PublishDir)wwwroot/index.html" />
+  </Target>
+
+</Project>

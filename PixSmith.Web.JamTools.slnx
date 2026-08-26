@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="PixSmith.Web.JamTools/PixSmith.Web.JamTools.csproj" />
+  <Project Path="PixSmith.Server.JamTools/PixSmith.Server.JamTools.csproj" />
 </Solution>

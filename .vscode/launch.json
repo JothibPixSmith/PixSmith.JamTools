@@ -1,0 +1,93 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Default F5: server C# + client C# (in-browser) in one go.
+      "name": "🚀 Server + SPA (debug both)",
+      "type": "blazorwasm",
+      "request": "launch",
+      "hosted": true,
+      "preLaunchTask": "build-server",
+      "program": "${workspaceFolder}/PixSmith.Server.JamTools/bin/Debug/net10.0/PixSmith.Server.JamTools.dll",
+      "cwd": "${workspaceFolder}/PixSmith.Server.JamTools",
+      "url": "http://localhost:5080",
+      // "browser" only accepts "chrome" | "edge" — "chrome" selects the
+      // Chromium-family debugger, and browserConfig points it at the actual
+      // binary (swap runtimeExecutable if you install Chromium natively).
+      "browser": "chrome",
+      "browserConfig": {
+        // Not the Flatpak's own wrapper — that one orphans the browser when the
+        // debug session ends. See the comments in chromium-debug.sh.
+        "runtimeExecutable": "${workspaceFolder}/.vscode/chromium-debug.sh",
+        // Flatpak Chromium has no access to $HOME, so the debug profile has to
+        // live inside the app's own sandbox-writable directory.
+        "userDataDir": "/home/base/.var/app/org.chromium.Chromium/config/vscode-debug"
+      },
+      // With "hosted": true the adapter launches the DLL directly (not "dotnet
+      // run"), so Properties/launchSettings.json is NOT read and the server would
+      // fall back to :5000 while the browser opens "url" above. Bind it here.
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5080"
+      }
+    },
+    {
+      // Server-side breakpoints only; opens the browser without a debugger attached.
+      "name": "🖥️  Server only (http)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-server",
+      "program": "${workspaceFolder}/PixSmith.Server.JamTools/bin/Debug/net10.0/PixSmith.Server.JamTools.dll",
+      "cwd": "${workspaceFolder}/PixSmith.Server.JamTools",
+      "args": [],
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5080"
+      }
+    },
+    {
+      "name": "🔒 Server only (https)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-server",
+      "program": "${workspaceFolder}/PixSmith.Server.JamTools/bin/Debug/net10.0/PixSmith.Server.JamTools.dll",
+      "cwd": "${workspaceFolder}/PixSmith.Server.JamTools",
+      "args": [],
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://localhost:7080;http://localhost:5080"
+      }
+    },
+    {
+      // No backend — the standalone WASM dev server, same as GitHub Pages serves it.
+      "name": "🌐 SPA standalone (no backend)",
+      "type": "blazorwasm",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/PixSmith.Web.JamTools",
+      "browser": "chrome",
+      "browserConfig": {
+        "runtimeExecutable": "${workspaceFolder}/.vscode/chromium-debug.sh",
+        "userDataDir": "/home/base/.var/app/org.chromium.Chromium/config/vscode-debug"
+      }
+    },
+    {
+      "name": "🔗 Attach to running server",
+      "type": "coreclr",
+      "request": "attach"
+    }
+  ]
+}

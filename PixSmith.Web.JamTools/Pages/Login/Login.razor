@@ -1,4 +1,5 @@
 @page "/login"
+@inject NavigationManager Navigation
 
 <PageTitle>Sign in — Jam Tools</PageTitle>
 
@@ -15,39 +16,24 @@
 
         <p class="login-subtitle">Sign in to sync your tunings and saved scales.</p>
 
-        <div class="login-fields">
-            <FluentTextField @bind-Value="_email"
-                             TextFieldType="TextFieldType.Email"
-                             Placeholder="you@example.com"
-                             Autofocus="true"
-                             Style="width:100%">
-                Email
-            </FluentTextField>
-
-            <FluentTextField @bind-Value="_password"
-                             TextFieldType="TextFieldType.Password"
-                             Placeholder="••••••••"
-                             Style="width:100%">
-                Password
-            </FluentTextField>
-        </div>
-
-        <div class="login-row">
-            <FluentCheckbox @bind-Value="_rememberMe">Remember me</FluentCheckbox>
-            <a class="login-link" href="login">Forgot password?</a>
-        </div>
-
-        @if (_message is not null)
+        @if (_signInFailed)
         {
-            <div class="login-note" role="status">@_message</div>
+            <div class="login-note" role="alert">
+                That sign-in didn't complete. Please try again.
+            </div>
         }
 
         <FluentButton Appearance="Appearance.Accent"
-                      OnClick="HandleSignInAsync"
-                      Loading="_busy"
+                      OnClick="SignIn"
+                      Loading="_redirecting"
                       Style="width:100%">
-            Sign in
+            Sign in with PixSmith
         </FluentButton>
+
+        <p class="login-hint">
+            You'll be taken to the PixSmith account page to enter your credentials,
+            then returned here. Jam Tools never sees your password.
+        </p>
 
         <div class="login-divider"><span>or</span></div>
 
@@ -56,41 +42,22 @@
 </div>
 
 @code {
-    private string? _email;
-    private string? _password;
-    private bool _rememberMe;
-    private bool _busy;
-    private string? _message;
+    private bool _redirecting;
+    private bool _signInFailed;
 
-    // Placeholder: no auth backend is wired up yet. Replace the body of the try
-    // block with a call into the API once /api/auth exists on the host.
-    private async Task HandleSignInAsync()
+    // The host redirects here with ?error=signin_failed when the callback fails.
+    protected override void OnInitialized()
     {
-        _message = null;
+        var query = new Uri(Navigation.Uri).Query;
+        _signInFailed = query.Contains("error=signin_failed", StringComparison.Ordinal);
+    }
 
-        if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
-        {
-            _message = "Enter an email and password to continue.";
-            return;
-        }
-
-        // An exception escaping a Blazor event handler is unhandled and takes the
-        // whole app down (the #blazor-error-ui bar, then nothing responds). Keep
-        // failures on the page instead, and never leave the button stuck loading.
-        try
-        {
-            _busy = true;
-            await Task.Delay(400);
-
-            _message = "Sign-in isn't connected yet — this page is UI only for now.";
-        }
-        catch (Exception ex)
-        {
-            _message = $"Sign-in failed: {ex.Message}";
-        }
-        finally
-        {
-            _busy = false;
-        }
+    // Must be a full-page navigation: the browser has to follow the redirect chain
+    // to the auth server and back. A fetch would be blocked and would lose the
+    // top-level context the correlation cookie depends on.
+    private void SignIn()
+    {
+        _redirecting = true;
+        Navigation.NavigateTo("api/auth/login?returnUrl=/success", forceLoad: true);
     }
 }

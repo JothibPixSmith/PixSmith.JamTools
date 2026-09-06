@@ -2,8 +2,37 @@
   "version": "0.2.0",
   "configurations": [
     {
-      // Default F5: server C# + client C# (in-browser) in one go.
-      "name": "🚀 Server + SPA (debug both)",
+      // ── Default F5. Use this for anything involving sign-in. ──────────────
+      // Server-side C# breakpoints work (including the OIDC callback and the
+      // token exchange). No JavaScript debugger is attached to the browser, so
+      // the OAuth redirect to the auth server and back cannot end the session.
+      "name": "🔑 Server + SPA (survives sign-in)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-server",
+      "program": "${workspaceFolder}/PixSmith.Server.JamTools/bin/Debug/net10.0/PixSmith.Server.JamTools.dll",
+      "cwd": "${workspaceFolder}/PixSmith.Server.JamTools",
+      "args": [],
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5080"
+      }
+    },
+    {
+      // ── Client-side C# breakpoints, in the browser. ───────────────────────
+      // WARNING: the sign-in redirect leaves this app's origin, and the browser
+      // debug session does not survive the round trip. When it ends, the C#
+      // extension kills the server session with it — that pairing is hardcoded
+      // in the adapter (cascadeTerminateToConfigurations) and cannot be turned
+      // off from here. Use this config for fretboard/UI work, not sign-in.
+      "name": "🚀 Server + SPA (debug client C#, breaks on sign-in)",
       "type": "blazorwasm",
       "request": "launch",
       "hosted": true,
@@ -32,27 +61,6 @@
       }
     },
     {
-      // Server-side breakpoints only; opens the browser without a debugger attached.
-      "name": "🖥️  Server only (http)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-server",
-      "program": "${workspaceFolder}/PixSmith.Server.JamTools/bin/Debug/net10.0/PixSmith.Server.JamTools.dll",
-      "cwd": "${workspaceFolder}/PixSmith.Server.JamTools",
-      "args": [],
-      "stopAtEntry": false,
-      "console": "internalConsole",
-      "serverReadyAction": {
-        "action": "openExternally",
-        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
-        "uriFormat": "%s"
-      },
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5080"
-      }
-    },
-    {
       "name": "🔒 Server only (https)",
       "type": "coreclr",
       "request": "launch",
@@ -73,8 +81,9 @@
       }
     },
     {
-      // No backend — the standalone WASM dev server, same as GitHub Pages serves it.
-      "name": "🌐 SPA standalone (no backend)",
+      // No backend — the standalone WASM dev server, same as GitHub Pages serves
+      // it. Sign-in does not work here: there is no host to hold the tokens.
+      "name": "🌐 SPA standalone (no backend, no sign-in)",
       "type": "blazorwasm",
       "request": "launch",
       "cwd": "${workspaceFolder}/PixSmith.Web.JamTools",

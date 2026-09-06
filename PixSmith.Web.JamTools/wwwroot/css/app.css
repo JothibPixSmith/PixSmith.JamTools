@@ -610,6 +610,100 @@ body {
         background: var(--neutral-stroke-layer-rest, rgba(255,255,255,0.12));
     }
 
+/* ── Sign-in result ──────────────────────────────────────────────────── */
+.login-hint {
+    font-size: 0.78rem;
+    line-height: 1.5;
+    text-align: center;
+    color: var(--neutral-foreground-hint, rgba(255,255,255,0.45));
+}
+
+.success-card {
+    max-width: 460px;
+    text-align: center;
+}
+
+.success-mark {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #0b1f10;
+    background: var(--dot-custom);
+}
+
+.success-heading {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 2rem;
+    letter-spacing: 3px;
+    color: var(--gold);
+    margin-top: -4px;
+}
+
+.success-heading--muted {
+    color: var(--neutral-foreground-hint, rgba(255,255,255,0.55));
+}
+
+.token-facts {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+    font-size: 0.82rem;
+    border: 1px solid var(--neutral-stroke-layer-rest, rgba(255,255,255,0.08));
+    border-radius: var(--radius);
+    padding: 12px 14px;
+}
+
+    .token-facts > div {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .token-facts dt {
+        color: var(--neutral-foreground-hint, rgba(255,255,255,0.5));
+    }
+
+    .token-facts dd {
+        font-family: 'IBM Plex Mono', monospace;
+        text-align: right;
+        word-break: break-word;
+    }
+
+.token-note {
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: var(--neutral-foreground-hint, rgba(255,255,255,0.45));
+    text-align: left;
+}
+
+.token-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    line-height: 1.45;
+    text-align: left;
+    word-break: break-all;
+    white-space: pre-wrap;
+    max-height: 190px;
+    overflow-y: auto;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    background: var(--neutral-layer-1, #1b1b1b);
+    border: 1px solid var(--neutral-stroke-layer-rest, rgba(255,255,255,0.08));
+}
+
+.success-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 600px) {
     :root {

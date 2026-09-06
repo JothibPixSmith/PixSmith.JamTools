@@ -1,0 +1,116 @@
+@page "/success"
+@using System.Text.Json.Serialization
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>Signed in — Jam Tools</PageTitle>
+
+<div class="login-wrap">
+    <div class="panel login-card success-card">
+
+        @if (_state == State.Loading)
+        {
+            <p class="login-subtitle">Checking your session…</p>
+        }
+        else if (_state == State.SignedOut)
+        {
+            <h1 class="success-heading success-heading--muted">Not signed in</h1>
+            <p class="login-subtitle">That session has expired or was never started.</p>
+            <a class="login-guest" href="login">Back to sign in</a>
+        }
+        else if (_state == State.Failed)
+        {
+            <h1 class="success-heading success-heading--muted">Couldn't read the session</h1>
+            <p class="login-subtitle">@_error</p>
+            <a class="login-guest" href="login">Back to sign in</a>
+        }
+        else
+        {
+            <div class="success-mark">✓</div>
+            <h1 class="success-heading">Success!</h1>
+
+            <p class="login-subtitle">
+                Signed in as <strong>@(_session!.Name ?? _session.Email ?? _session.Subject)</strong>
+            </p>
+
+            <dl class="token-facts">
+                <div><dt>Token type</dt><dd>@_session.Token?.Type</dd></div>
+                <div><dt>Expires</dt><dd>@FormatExpiry(_session.Token?.ExpiresAt)</dd></div>
+                <div><dt>Length</dt><dd>@_session.Token?.Length chars</dd></div>
+                <div><dt>Refresh token</dt><dd>@(_session.Token?.HasRefreshToken == true ? "yes" : "no")</dd></div>
+                @if (_session.Roles is { Length: > 0 })
+                {
+                    <div><dt>Roles</dt><dd>@string.Join(", ", _session.Roles)</dd></div>
+                }
+            </dl>
+
+            <p class="token-note">
+                The access token is held in server memory and keyed to your session
+                cookie — it was never written into the browser by the sign-in flow.
+            </p>
+
+            @if (!string.IsNullOrEmpty(_session.Token?.AccessToken))
+            {
+                <FluentButton Appearance="Appearance.Neutral" OnClick="() => _revealed = !_revealed" Style="width:100%">
+                    @(_revealed ? "Hide token" : "Show the token that was received")
+                </FluentButton>
+
+                @if (_revealed)
+                {
+                    <pre class="token-value">@_session.Token.AccessToken</pre>
+                }
+            }
+
+            <div class="login-divider"><span>or</span></div>
+
+            <div class="success-actions">
+                <a class="login-guest" href="">Go to the fretboard</a>
+                <a class="login-link" href="api/auth/logout">Sign out</a>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private enum State { Loading, SignedIn, SignedOut, Failed }
+
+    private State _state = State.Loading;
+    private SessionInfo? _session;
+    private string? _error;
+    private bool _revealed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _session = await Http.GetFromJsonAsync<SessionInfo>("api/auth/session");
+            _state = _session?.Authenticated == true ? State.SignedIn : State.SignedOut;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _state = State.Failed;
+        }
+    }
+
+    private static string FormatExpiry(string? expiresAt) =>
+        DateTimeOffset.TryParse(expiresAt, out var when)
+            ? $"{when.ToLocalTime():g} ({(when - DateTimeOffset.UtcNow).TotalMinutes:F0} min)"
+            : expiresAt ?? "—";
+
+    private sealed record SessionInfo(
+        [property: JsonPropertyName("authenticated")] bool Authenticated,
+        [property: JsonPropertyName("subject")] string? Subject,
+        [property: JsonPropertyName("name")] string? Name,
+        [property: JsonPropertyName("email")] string? Email,
+        [property: JsonPropertyName("roles")] string[]? Roles,
+        [property: JsonPropertyName("token")] TokenInfo? Token);
+
+    private sealed record TokenInfo(
+        [property: JsonPropertyName("type")] string? Type,
+        [property: JsonPropertyName("expiresAt")] string? ExpiresAt,
+        [property: JsonPropertyName("hasIdToken")] bool HasIdToken,
+        [property: JsonPropertyName("hasRefreshToken")] bool HasRefreshToken,
+        [property: JsonPropertyName("length")] int Length,
+        [property: JsonPropertyName("accessToken")] string? AccessToken);
+}

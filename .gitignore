@@ -416,3 +416,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Client assertion signing key (generated on first run, never commit)
+PixSmith.Server.JamTools/keys/

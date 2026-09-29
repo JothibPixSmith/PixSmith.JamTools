@@ -34,6 +34,13 @@
             </p>
 
             <dl class="token-facts">
+                @if (_session.Organization is not null)
+                {
+                    <div>
+                        <dt>Company</dt>
+                        <dd>@(_session.Organization.Slug ?? _session.Organization.Id)</dd>
+                    </div>
+                }
                 <div><dt>Token type</dt><dd>@_session.Token?.Type</dd></div>
                 <div><dt>Expires</dt><dd>@FormatExpiry(_session.Token?.ExpiresAt)</dd></div>
                 <div><dt>Length</dt><dd>@_session.Token?.Length chars</dd></div>
@@ -47,6 +54,13 @@
             <p class="token-note">
                 The access token is held in server memory and keyed to your session
                 cookie — it was never written into the browser by the sign-in flow.
+                @if (_session.Organization is null)
+                {
+                    <text>
+                        No company claim came back: the auth server does not emit
+                        <code>org_id</code> yet, so this token has no tenancy context.
+                    </text>
+                }
             </p>
 
             @if (!string.IsNullOrEmpty(_session.Token?.AccessToken))
@@ -104,7 +118,12 @@
         [property: JsonPropertyName("name")] string? Name,
         [property: JsonPropertyName("email")] string? Email,
         [property: JsonPropertyName("roles")] string[]? Roles,
+        [property: JsonPropertyName("organization")] OrganizationInfo? Organization,
         [property: JsonPropertyName("token")] TokenInfo? Token);
+
+    private sealed record OrganizationInfo(
+        [property: JsonPropertyName("id")] string? Id,
+        [property: JsonPropertyName("slug")] string? Slug);
 
     private sealed record TokenInfo(
         [property: JsonPropertyName("type")] string? Type,

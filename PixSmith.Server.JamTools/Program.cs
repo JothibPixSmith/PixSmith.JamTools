@@ -19,6 +19,26 @@ var oidc = builder.Configuration.GetSection("Oidc");
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<ITicketStore, ServerSideTicketStore>();
 
+// How this deployment proves it is itself at the token endpoint. "PrivateKeyJwt" is the
+// auth server's current recommendation: this app holds a private key, the server holds
+// only the public half, and rotating is additive rather than a hard cutover. Set
+// Oidc:ClientAuthentication to "ClientSecret" to fall back to the shared secret.
+var usePrivateKeyJwt = !string.Equals(
+	oidc["ClientAuthentication"], "ClientSecret", StringComparison.OrdinalIgnoreCase);
+
+if (usePrivateKeyJwt)
+{
+	builder.Services.AddSingleton(sp => new ClientAssertionService(
+		oidc["ClientId"] ?? throw new InvalidOperationException("Oidc:ClientId is required."),
+		oidc["Authority"] ?? throw new InvalidOperationException("Oidc:Authority is required."),
+		Path.Combine(builder.Environment.ContentRootPath,
+			oidc["SigningKeyPath"] ?? "keys/client-signing-key.pem"),
+		sp.GetRequiredService<ILogger<ClientAssertionService>>(),
+		// Defaults to the issuer, which is what this auth server expects. Override only
+		// for a server that wants its token endpoint URL instead.
+		oidc["ClientAssertionAudience"]));
+}
+
 // The ticket store is what moves the tokens off the cookie and into server memory.
 builder.Services
 	.AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -50,7 +70,10 @@ builder.Services.AddAuthentication(options =>
 	{
 		options.Authority = oidc["Authority"];
 		options.ClientId = oidc["ClientId"];
-		options.ClientSecret = oidc["ClientSecret"];
+
+		// With an assertion there is no secret to configure at all — that is the point.
+		if (!usePrivateKeyJwt)
+			options.ClientSecret = oidc["ClientSecret"];
 
 		// The auth server runs on plain http in development; metadata retrieval
 		// would refuse that otherwise.
@@ -92,13 +115,58 @@ builder.Services.AddAuthentication(options =>
 		options.NonceCookie.SameSite = SameSiteMode.Lax;
 		options.NonceCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 
+		// ── Tenancy ───────────────────────────────────────────────────────────
+		// The auth server nests application access inside a company: a user may use
+		// this app when their company subscribes to it. Which company a token is for
+		// is chosen at authorize time via an "organization" parameter — OpenIddict
+		// passes unknown parameters through, and the authorize endpoint reads it.
+		//
+		// Leave Oidc:Organization empty to let the auth server decide: it resolves a
+		// user with exactly one membership automatically, and prompts anyone with
+		// several. Set it to pin this app to one company.
+		var organization = oidc["Organization"];
+		if (!string.IsNullOrWhiteSpace(organization))
+		{
+			options.Events.OnRedirectToIdentityProvider = context =>
+			{
+				context.ProtocolMessage.SetParameter("organization", organization);
+				return Task.CompletedTask;
+			};
+		}
+
+		// The OIDC handler has no first-class private_key_jwt support, so the assertion
+		// is attached to the token request by hand. This is the only leg that needs it:
+		// the authorize request identifies the client by client_id alone.
+		if (usePrivateKeyJwt)
+		{
+			options.Events.OnAuthorizationCodeReceived = context =>
+			{
+				var assertions = context.HttpContext.RequestServices
+					.GetRequiredService<ClientAssertionService>();
+
+				context.TokenEndpointRequest!.ClientAssertionType =
+					"urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+				context.TokenEndpointRequest.ClientAssertion = assertions.CreateAssertion();
+				context.TokenEndpointRequest.ClientSecret = null;
+
+				return Task.CompletedTask;
+			};
+		}
+
 		// Anything that goes wrong on the way back — the user cancelling, an expired
 		// code, a clock skew — otherwise surfaces as an unhandled exception and a raw
 		// 500 page. Send them back to the sign-in page instead; the detail is already
 		// in the server log.
 		options.Events.OnRemoteFailure = context =>
 		{
-			context.Response.Redirect("/login?error=signin_failed");
+			// access_denied is the tenancy answer: the person authenticated fine, but
+			// their company has no subscription to this app (or their membership is
+			// inactive). That deserves its own message — "try again" is wrong advice.
+			var error = context.Failure?.Message.Contains("access_denied", StringComparison.OrdinalIgnoreCase) == true
+				? "no_access"
+				: "signin_failed";
+
+			context.Response.Redirect($"/login?error={error}");
 			context.HandleResponse();
 			return Task.CompletedTask;
 		};
@@ -107,6 +175,15 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+// Construct the assertion service now rather than on first use. It generates the signing
+// key and writes its public JWKS on construction, and both need to exist *before* a
+// sign-in is attempted — provisioning registers that public key. Resolving it lazily meant
+// a freshly cloned checkout had no key until something happened to touch it.
+if (usePrivateKeyJwt)
+{
+	app.Services.GetRequiredService<ClientAssertionService>();
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -165,6 +242,16 @@ api.MapGet("/auth/logout", () => Results.SignOut(
 	new AuthenticationProperties { RedirectUri = "/" },
 	[CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme]));
 
+// The public half of this deployment's assertion key, in JWKS form — what the auth
+// server needs to verify our assertions. Public keys only, so serving it is harmless;
+// tools/provision-app-access.sh reads it from here rather than making anyone copy key
+// material around by hand.
+if (usePrivateKeyJwt)
+{
+	api.MapGet("/auth/client-jwks", (ClientAssertionService assertions) =>
+		Results.Content(assertions.PublicJwks(), "application/json"));
+}
+
 // What the Success page reads. Answers for signed-out callers too, so the SPA can
 // tell "not signed in" apart from "something broke".
 api.MapGet("/auth/session", async (HttpContext context) =>
@@ -176,13 +263,24 @@ api.MapGet("/auth/session", async (HttpContext context) =>
 	var accessToken = await context.GetTokenAsync("access_token");
 	var expiresAt = await context.GetTokenAsync("expires_at");
 
+	// Emitted once the auth server reaches stage 4 of its multi-tenancy rollout;
+	// null until then, so treat their absence as "no company context yet" rather
+	// than an error.
+	var orgId = user.FindFirst("org_id")?.Value;
+	var orgSlug = user.FindFirst("org_slug")?.Value;
+
 	return Results.Ok(new
 	{
 		authenticated = true,
 		subject = user.FindFirst("sub")?.Value,
 		name = user.Identity.Name ?? user.FindFirst("name")?.Value,
 		email = user.FindFirst("email")?.Value,
+		// Company-scoped under the tenant model: the platform-wide Admin role is
+		// deliberately not carried into an application token.
 		roles = user.FindAll("role").Select(c => c.Value).ToArray(),
+		organization = orgId is null && orgSlug is null
+			? null
+			: new { id = orgId, slug = orgSlug },
 		token = new
 		{
 			type = await context.GetTokenAsync("token_type") ?? "Bearer",

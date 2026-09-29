@@ -16,11 +16,9 @@
 
         <p class="login-subtitle">Sign in to sync your tunings and saved scales.</p>
 
-        @if (_signInFailed)
+        @if (_error is not null)
         {
-            <div class="login-note" role="alert">
-                That sign-in didn't complete. Please try again.
-            </div>
+            <div class="login-note" role="alert">@_error</div>
         }
 
         <FluentButton Appearance="Appearance.Accent"
@@ -43,13 +41,22 @@
 
 @code {
     private bool _redirecting;
-    private bool _signInFailed;
+    private string? _error;
 
-    // The host redirects here with ?error=signin_failed when the callback fails.
+    // The host redirects here with ?error=... when the callback fails.
     protected override void OnInitialized()
     {
         var query = new Uri(Navigation.Uri).Query;
-        _signInFailed = query.Contains("error=signin_failed", StringComparison.Ordinal);
+
+        _error = query switch
+        {
+            _ when query.Contains("error=no_access", StringComparison.Ordinal) =>
+                "Your account signed in, but your company doesn't have access to Jam Tools. "
+                + "Ask an administrator to subscribe your organisation to this app.",
+            _ when query.Contains("error=signin_failed", StringComparison.Ordinal) =>
+                "That sign-in didn't complete. Please try again.",
+            _ => null,
+        };
     }
 
     // Must be a full-page navigation: the browser has to follow the redirect chain
